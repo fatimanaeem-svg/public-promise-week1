@@ -8,7 +8,7 @@ QUESTION_TEXT = os.environ.get(
     "“By Thursday I will have x number of customers.”",
 )
 
-EVENT_TITLE = os.environ.get("EVENT_TITLE", "Founder Residency — Week 1 Public Promise")
+EVENT_TITLE = os.environ.get("EVENT_TITLE", "Founder Residency — Week 1")
 
 # Basic auth credentials for /admin and /export. Set ADMIN_PASSWORD in your
 # Render environment variables before the event - do not rely on the default.

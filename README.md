@@ -49,7 +49,7 @@ strings — you can change them without touching code:
 | Env var | What it controls | Default |
 |---|---|---|
 | `QUESTION_TEXT` | The prompt shown on the submit form and display screen | The "one concrete goal..." prompt from the brief |
-| `EVENT_TITLE` | Heading shown on submit/display/QR/admin pages | `Founder Residency — Week 1 Public Promise` |
+| `EVENT_TITLE` | Heading shown on submit/display/QR/admin pages | `Founder Residency — Week 1` |
 | `ADMIN_USERNAME` | Basic-auth username for `/admin` and `/export` | `admin` |
 | `ADMIN_PASSWORD` | Basic-auth password for `/admin` and `/export` | `changeme` — **change this** |
 | `DB_PATH` | Where the SQLite file lives | `/var/data/submissions.db` on Render |

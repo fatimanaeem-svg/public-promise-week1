@@ -18,4 +18,4 @@ services:
       - key: ADMIN_PASSWORD
         sync: false
       - key: EVENT_TITLE
-        value: "Founder Residency — Week 1 Public Promise"
+        value: "Founder Residency — Week 1"
