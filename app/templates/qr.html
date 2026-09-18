@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{ event_title }} — QR</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #ffffff;
+    color: #0b0d12;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .wrap {
+    text-align: center;
+  }
+  h1 {
+    font-size: clamp(24px, 3vw, 40px);
+    margin-bottom: 8px;
+  }
+  p.sub {
+    color: #555;
+    font-size: clamp(16px, 1.8vw, 22px);
+    margin-top: 0;
+    margin-bottom: 28px;
+  }
+  img {
+    width: min(70vw, 520px);
+    height: min(70vw, 520px);
+    image-rendering: pixelated;
+  }
+  .url {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #888;
+    word-break: break-all;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Scan to submit your promise</h1>
+    <p class="sub">{{ event_title }}</p>
+    <img src="/qr.png" alt="QR code to submission form" />
+    <div class="url">{{ submit_url }}</div>
+  </div>
+</body>
+</html>

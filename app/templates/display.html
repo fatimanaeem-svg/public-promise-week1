@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>{{ event_title }} — Live</title>
+<style>
+  :root {
+    --bg: #05060a;
+    --card: #12141c;
+    --text: #ffffff;
+    --muted: #8b93a7;
+    --accent: #5b8cff;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    height: 100%;
+    overflow: hidden;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 28px 40px 32px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 18px;
+    flex: 0 0 auto;
+  }
+  header .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    font-size: clamp(14px, 1.4vw, 20px);
+    font-weight: 700;
+  }
+  header .q {
+    font-size: clamp(16px, 1.6vw, 24px);
+    color: #c7ccd8;
+    margin-top: 6px;
+    font-weight: 500;
+  }
+
+  #spotlight {
+    flex: 0 0 auto;
+    min-height: 30vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .spotlight-card {
+    width: 100%;
+    max-width: 1400px;
+    background: linear-gradient(145deg, #1a1d29, #0e1017);
+    border: 1px solid #262b3a;
+    border-radius: 28px;
+    padding: clamp(28px, 4vw, 56px);
+    box-shadow: 0 0 0 1px rgba(91,140,255,0.15), 0 30px 80px rgba(0,0,0,0.5);
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+  .spotlight-card.enter {
+    animation: spotlightIn 0.6s cubic-bezier(.2,.8,.2,1) forwards;
+  }
+  @keyframes spotlightIn {
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .spotlight-card .name {
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 800;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .spotlight-card .answer {
+    font-size: clamp(22px, 3vw, 38px);
+    line-height: 1.4;
+    font-weight: 500;
+    white-space: pre-wrap;
+  }
+  .idle-msg {
+    color: var(--muted);
+    font-size: clamp(20px, 2.4vw, 30px);
+    font-weight: 600;
+    text-align: center;
+  }
+
+  #feed {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    border-top: 1px solid #1c1f2b;
+    padding-top: 18px;
+    scroll-behavior: smooth;
+  }
+  #feed::-webkit-scrollbar { width: 0; height: 0; }
+
+  .feed-item {
+    display: flex;
+    gap: 16px;
+    align-items: baseline;
+    padding: 10px 8px;
+    border-bottom: 1px solid #14161f;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: feedIn 0.5s ease forwards;
+  }
+  @keyframes feedIn {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feed-item .name {
+    flex: 0 0 auto;
+    min-width: 160px;
+    font-weight: 700;
+    color: var(--accent);
+    font-size: clamp(14px, 1.3vw, 19px);
+  }
+  .feed-item .answer {
+    color: #d6dae4;
+    font-size: clamp(13px, 1.2vw, 18px);
+    line-height: 1.4;
+  }
+
+  #counter {
+    position: fixed;
+    top: 20px;
+    right: 28px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+  <div id="counter">0 submitted</div>
+  <header>
+    <div class="eyebrow">{{ event_title }}</div>
+    <div class="q">{{ question_text }}</div>
+  </header>
+
+  <div id="spotlight"><div class="idle-msg">Waiting for the first promise&hellip;</div></div>
+  <div id="feed"></div>
+
+<script>
+(function () {
+  var spotlight = document.getElementById('spotlight');
+  var feed = document.getElementById('feed');
+  var counter = document.getElementById('counter');
+  var queue = [];
+  var showing = false;
+  var SPOTLIGHT_HOLD_MS = 6500;
+  var total = 0;
+  var seenIds = {};
+
+  function escapeHtml(s) {
+    var div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function updateCounter() {
+    counter.textContent = total + (total === 1 ? ' submitted' : ' submitted');
+  }
+
+  function appendToFeed(item) {
+    var el = document.createElement('div');
+    el.className = 'feed-item';
+    el.innerHTML = '<div class="name">' + escapeHtml(item.name) + '</div>' +
+                    '<div class="answer">' + escapeHtml(item.answer) + '</div>';
+    feed.appendChild(el);
+    feed.scrollTop = feed.scrollHeight;
+  }
+
+  function showNext() {
+    if (queue.length === 0) {
+      showing = false;
+      if (total === 0) {
+        spotlight.innerHTML = '<div class="idle-msg">Waiting for the first promise&hellip;</div>';
+      } else {
+        spotlight.innerHTML = '<div class="idle-msg">Watching for the next promise&hellip;</div>';
+      }
+      return;
+    }
+    showing = true;
+    var item = queue.shift();
+
+    var card = document.createElement('div');
+    card.className = 'spotlight-card';
+    card.innerHTML = '<div class="name">' + escapeHtml(item.name) + '</div>' +
+                      '<div class="answer">' + escapeHtml(item.answer) + '</div>';
+    spotlight.innerHTML = '';
+    spotlight.appendChild(card);
+    requestAnimationFrame(function () {
+      card.classList.add('enter');
+    });
+
+    total += 1;
+    updateCounter();
+
+    setTimeout(function () {
+      appendToFeed(item);
+      showNext();
+    }, SPOTLIGHT_HOLD_MS);
+  }
+
+  function enqueue(item) {
+    if (seenIds[item.id]) return;
+    seenIds[item.id] = true;
+    queue.push(item);
+    if (!showing) showNext();
+  }
+
+  function loadRecent() {
+    fetch('/api/recent?limit=200')
+      .then(function (r) { return r.json(); })
+      .then(function (list) {
+        list.forEach(function (item) {
+          seenIds[item.id] = true;
+          appendToFeed(item);
+          total += 1;
+        });
+        updateCounter();
+        if (total > 0) {
+          spotlight.innerHTML = '<div class="idle-msg">Watching for the next promise&hellip;</div>';
+        }
+        connectSocket();
+      })
+      .catch(function () { connectSocket(); });
+  }
+
+  function connectSocket() {
+    var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    var ws = new WebSocket(proto + '//' + location.host + '/ws/display');
+    ws.onmessage = function (evt) {
+      try {
+        var msg = JSON.parse(evt.data);
+        if (msg.type === 'submission') enqueue(msg.data);
+      } catch (e) {}
+    };
+    ws.onclose = function () {
+      setTimeout(connectSocket, 2000);
+    };
+  }
+
+  loadRecent();
+})();
+</script>
+</body>
+</html>
